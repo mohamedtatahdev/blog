@@ -1,0 +1,11 @@
+
+.content-form {
+    max-width: 1000px;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-flow: column;
+    align-self: center;
+    align-items: center;
+ 
+  }
