@@ -1,4 +1,5 @@
 <?php
+$articleDB = require_once __DIR__ . '/database/models/ArticleDB.php';
 const ERROR_REQUIRED = 'Veuillez renseignez ce champ';
 const ERROR_TITLE_TOO_SHORT = 'Le titre est trop court';
 const ERROR_CONTENT_TOO_SHORT = 'L\'article est trop court';
@@ -13,15 +14,12 @@ $errors = [
 
 $category = '';
 
-if (file_exists($filename)) {
-    $articles = json_decode(file_get_contents($filename), true) ?? [];
-}
+
 $_GET = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $id = $_GET['id'] ?? '';
 
 if ($id) {
-    $articleIndex = array_search($id, array_column($articles, 'id'));
-    $article = $articles[$articleIndex];
+    $article = $articleDB->fetchOne($id);
     $title = $article['title'];
     $image = $article['image'];
     $category = $article['category'];
@@ -67,23 +65,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty(array_filter($errors, fn ($e) => $e !== ''))) {
         if ($id) {
-          $articles[$articleIndex]['title'] = $title;
-          $articles[$articleIndex]['image'] = $image;
-          $articles[$articleIndex]['category'] = $category;
-          $articles[$articleIndex]['content'] = $content;
-        } else {
-            $articles = [...$articles, [
-                'title' => $title,
-                'image' => $image,
-                'category' => $category,
-                'content' => $content,
-                'id' => time()
-              ]];
-            }
-            file_put_contents($filename, json_encode($articles));
-            header('Location: /');
-          }
+            $article['title'] = $title;
+      $article['image'] = $image;
+      $article['category'] = $category;
+      $article['content'] = $content;
+      $articleDB->updateOne($article);
 
+        } else {
+            $articleDB->createOne([
+                'title' => $title,
+                'content' => $content,
+                'category' => $category,
+                'image' => $image
+              ]);
+        }
+        header('Location: /');
+    }
 }
 
 ?>
@@ -140,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
                     <select name="category" id="category" class="form-group" value=<?= $category ?? '' ?>>
-                        <option value="" disabled selected>Sélectionnez une catégorie</option>
+                    <option value="" disabled <?= (!$category) ? 'selected' : '' ?>>Sélectionnez une catégorie</option>
                         <option <?= !$category || $category === 'physiologique' ? 'selected' : '' ?> value="physiologique">Besoin physiologique</option>
                         <option <?= !$category || $category === 'securite' ? 'selected' : '' ?> value="securite">Besoin de sécurité</option>
                         <option <?= !$category || $category === 'appartenance' ? 'selected' : '' ?> value="appartenance">Besoin d'appartenance et d'amour </option>

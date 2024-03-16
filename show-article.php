@@ -1,6 +1,7 @@
 <?php
-$filename = __DIR__ . '/data/articles.json';
-$articles = [];
+$articleDB = require_once __DIR__ . '/database/models/ArticleDB.php';
+$statement = $pdo->prepare('SELECT * FROM article WHERE id = :id');
+
 $_GET = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $id = $_GET['id'] ?? '';
 $categories = [];
@@ -11,29 +12,8 @@ $selectedCat = $_GET['cat'] ?? '';
 if (!$id) {
   header('Location: /');
 } else {
-  if (file_exists($filename)) {
-    $articles = json_decode(file_get_contents($filename), true) ?? [];
-    $articleIndex = array_search($id, array_column($articles, 'id'));
-    $article = $articles[$articleIndex];
-    $cattmp = array_map(fn ($a) => $a['category'],  $articles);
-  $categories = array_reduce($cattmp, function ($acc, $cat) {
-    if (isset($acc[$cat])) {
-      $acc[$cat]++;
-    } else {
-      $acc[$cat] = 1;
+  $article = $articleDB->fetchOne($id);
     }
-    return $acc;
-  }, []);
-  $articlePerCategories = array_reduce($articles, function ($acc, $article) {
-    if (isset($acc[$article['category']])) {
-      $acc[$article['category']] = [...$acc[$article['category']], $article];
-    } else {
-      $acc[$article['category']] = [$article];
-    }
-    return $acc;
-  }, []);
-  }
-}
 
 
 
@@ -87,19 +67,19 @@ if (!$id) {
                   <li><a href="#"><i class="fa fa-comments"></i> 03 Comments</a></li>
                 </ul>
                 <p class="excert">
-                <?= $article['content'] ?>
+                  <?= $article['content'] ?>
                 </p>
 
                 <div class="form-group mt-3 d-flex justify-content-end ">
-                        <a href="/delete-article.php?id=<?= $article['id'] ?>" class="boxed-btn mr-4" type="submit">Supprimer</a>
-                        <a href="/form-article.php?id=<?= $article['id'] ?>" class="btn" type="submit">Modifier</a>
-                    </div>
+                  <a href="/delete-article.php?id=<?= $article['id'] ?>" class="boxed-btn mr-4" type="submit">Supprimer</a>
+                  <a href="/form-article.php?id=<?= $article['id'] ?>" class="btn" type="submit">Modifier</a>
+                </div>
               </div>
             </div>
           </div>
-            
-            
-              
+
+
+
           <?php require_once 'includes/categories.php' ?>
 
         </div>
@@ -107,16 +87,16 @@ if (!$id) {
     </section>
     <!-- Blog Area End -->
     <!-- ? services-area -->
-    
+
   </main>
   <?php require_once 'includes/footer.php' ?>
 
- 
+
   <div id="back-top">
     <a title="Go to Top" href="#"> <i class="fas fa-level-up-alt"></i></a>
   </div>
 
-  
+
 
   <script src="./assets/js/vendor/modernizr-3.5.0.min.js"></script>
   <!-- Jquery, Popper, Bootstrap -->
